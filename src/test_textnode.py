@@ -3,6 +3,7 @@ import unittest
 from textnode import TextNode, TextType, text_node_to_html_node
 from split_delimiter import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes
 from extract_markdown import extract_markdown_images, extract_markdown_links
+from markdown_to_blocks import markdown_to_blocks, BlockType, block_to_block_type
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -116,6 +117,56 @@ class TestTextNode(unittest.TestCase):
             ],
             result,
         )
+
+
+        def test_markdown_to_blocks(self):
+            md = """
+            This is **bolded** paragraph
+
+            This is another paragraph with _italic_ text and `code` here
+            This is the same paragraph on a new line
+
+            - This is a list
+            - with items
+            """
+            blocks = markdown_to_blocks(md)
+            self.assertEqual(
+                blocks,
+                [
+                    "This is **bolded** paragraph",
+                    "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
+                    "- This is a list\n- with items",
+                ],
+            )
+
+
+        def test_block_to_block_type_heading(self):
+            block = "### Hello world"
+            self.assertEqual(block_to_block_type(block), BlockType.HEADING)
+
+        def test_block_to_block_type_code_block(self):
+            block = "```\nprint('hi')\n```"
+            self.assertEqual(block_to_block_type(block), BlockType.CODE)
+
+        def test_block_to_block_type_quote_block(self):
+            block = "> Quote line 1\n>Quote line 2\n> Quote line 3"
+            self.assertEqual(block_to_block_type(block), BlockType.QUOTE)
+
+        def test_block_to_block_type_unordered_list(self):
+            block = "- item 1\n- item 2\n- item 3"
+            self.assertEqual(block_to_block_type(block), BlockType.UNORDERED_LIST)
+
+        def test_block_to_block_type_ordered_list(self):
+            block = "1. first\n2. second\n3. third"
+            self.assertEqual(block_to_block_type(block), BlockType.ORDERED_LIST)
+
+        def test_block_to_block_type_ordered_list_not_starting_at_one(self):
+            block = "2. second\n3. third"
+            self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
+
+        def test_block_to_block_type_ordered_list_not_incrementing(self):
+            block = "1. first\n3. third"
+            self.assertEqual(block_to_block_type(block), BlockType.PARAGRAPH)
 
 
 if __name__ == "__main__":
